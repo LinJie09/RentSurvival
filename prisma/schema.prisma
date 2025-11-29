@@ -1,0 +1,27 @@
+// 告訴 Prisma 我們使用 SQLite (輕量化資料庫檔案)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 1. 設定檔 (存薪水、房租等設定)
+// 因為是單機版，我們預設只會用 ID=1 來存使用者的設定
+model Settings {
+  id            Int     @id @default(1)
+  totalSalary   Int     @default(32000)
+  rent          Int     @default(8500)
+  savingsTarget Int     @default(6200)
+  fixedCost     Int     @default(3000)
+}
+
+// 2. 記帳紀錄 (存每一筆便當、飲料)
+model Expense {
+  id        Int      @id @default(autoincrement())
+  amount    Int      // 金額
+  name      String   // 品項名稱 (例如：午餐)
+  createdAt DateTime @default(now()) // 記帳時間 (自動填入當下時間)
+}
