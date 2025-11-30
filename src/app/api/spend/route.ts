@@ -67,3 +67,23 @@ export async function DELETE(request: Request) {
     }
   }
 
+// ... (上面是 GET, POST, DELETE) ...
+
+// 🟡 PUT: 修改現有消費
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json(); // 接收 id, name, amount
+    
+    const updatedExpense = await prisma.expense.update({
+      where: { id: body.id },
+      data: {
+        name: body.name,
+        amount: Number(body.amount),
+      },
+    });
+
+    return NextResponse.json(updatedExpense);
+  } catch (error) {
+    return NextResponse.json({ error: '更新失敗' }, { status: 500 });
+  }
+}

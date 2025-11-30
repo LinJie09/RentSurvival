@@ -14,14 +14,31 @@ model Settings {
   id            Int     @id @default(1)
   totalSalary   Int     @default(32000)
   rent          Int     @default(8500)
-  savingsTarget Int     @default(6200)
-  fixedCost     Int     @default(3000)
+  savingsTarget Int     @default(6200) // 儲蓄投資
+  riskTarget    Int     @default(3200) // ✨ 新增：風險規劃 (預設 10%)
+  fixedCost     Int     @default(3000) // 固定帳單 (屬於生活帳戶的支出)
 }
 
-// 2. 記帳紀錄 (存每一筆便當、飲料)
 model Expense {
   id        Int      @id @default(autoincrement())
-  amount    Int      // 金額
-  name      String   // 品項名稱 (例如：午餐)
-  createdAt DateTime @default(now()) // 記帳時間 (自動填入當下時間)
+  amount    Int
+  name      String
+  createdAt DateTime @default(now())
+}
+// ✨ 新增：投資組合 (存股票)
+model Portfolio {
+  id           Int      @id @default(autoincrement())
+  symbol       String   // 代號 (例如: 0050, 2330)
+  shares       Int      // 股數 (例如: 1000 股)
+  avgCost      Float    // 平均成本 (例如: 150.5 元)
+  currentPrice Float    // 目前市價 (手動更新或模擬)
+  createdAt    DateTime @default(now())
+}
+// ✨ 新增：風險規劃項目 (保險、緊急預備金)
+model RiskItem {
+  id        Int      @id @default(autoincrement())
+  name      String   // 項目名稱 (例如: 富邦醫療險, 緊急預備金)
+  amount    Int      // 金額 (保費 or 存款金額)
+  type      String   // 類別 (例如: "insurance" 或 "cash")
+  createdAt DateTime @default(now())
 }

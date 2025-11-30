@@ -1,0 +1,8 @@
+-- CreateTable
+CREATE TABLE "RiskItem" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "name" TEXT NOT NULL,
+    "amount" INTEGER NOT NULL,
+    "type" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
