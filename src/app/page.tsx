@@ -391,7 +391,7 @@ export default function Dashboard() {
           <div>
             <h1 className="text-2xl font-serif font-bold text-stone-800 tracking-wide">
               {viewMode === "dashboard"
-                ? "My 3 Accounts"
+                ? "RentSurvival"
                 : viewMode === "investment"
                 ? "Investment Portfolio"
                 : "Risk Management"}
@@ -939,10 +939,10 @@ export default function Dashboard() {
               >
                 <div className="text-center">
                   <span className="text-2xl block mb-1 group-hover:scale-110 transition-transform">
-                    ☕
+                    🥤
                   </span>
                   <span className="text-stone-600 font-bold text-xs tracking-wide">
-                    Coffee
+                    Drink
                   </span>
                 </div>
               </button>
