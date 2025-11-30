@@ -34,7 +34,7 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) return new NextResponse("Unauthorized", { status: 401 });
     const body = await request.json();
     await prisma.riskItem.updateMany({
