@@ -19,6 +19,9 @@ export default function Dashboard() {
   // ✨ 新增：解決 Hydration Error 的關鍵狀態
   const [mounted, setMounted] = useState(false);
 
+  const [customDate, setCustomDate] = useState("");
+  const [recordType, setRecordType] = useState("EXPENSE");
+
   // 模式控制
   const [isEditing, setIsEditing] = useState(false);
   const [viewMode, setViewMode] = useState<"dashboard" | "investment" | "risk">(
@@ -100,7 +103,6 @@ export default function Dashboard() {
         setRiskItems(riskData || []);
         setPortfolio(Array.isArray(investData) ? investData : []);
         setRiskItems(Array.isArray(riskData) ? riskData : []);
-        
       } catch (error) {
         console.error("讀取失敗:", error);
       }
@@ -284,6 +286,10 @@ export default function Dashboard() {
   const handleEditClick = (item: any) => {
     setEditId(item.id);
     setCustomAmount(item.amount.toString());
+    setRecordType(item.type || "EXPENSE");
+    // 處理日期格式 (YYYY-MM-DD)
+    setCustomDate(new Date(item.createdAt).toISOString().split("T")[0]);
+
     const nameStr = String(item.name || "");
     if (nameStr.includes(" ")) {
       const parts = nameStr.split(" ");
@@ -321,37 +327,31 @@ export default function Dashboard() {
     if (!customName || !customAmount) return;
     const finalName = `${selectedIcon} ${customName}`;
     const amountNum = Number(customAmount);
+    
+    // 準備傳送的資料
+    const payload = { 
+      amount: amountNum, 
+      name: finalName, 
+      type: recordType,      
+      date: customDate || new Date()
+    };
+
     try {
       if (editId) {
-        await fetch("/api/spend", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: editId,
-            amount: amountNum,
-            name: finalName,
-          }),
-        });
+        await fetch("/api/spend", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, id: editId }) });
       } else {
-        await fetch("/api/spend", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: amountNum, name: finalName }),
-        });
+        await fetch("/api/spend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       }
-      const refreshRes = await fetch("/api/spend");
-      const refreshData = await refreshRes.json();
+      const refreshRes = await fetch('/api/spend'); const refreshData = await refreshRes.json();
       const safeTotalSpent = Number(refreshData.totalSpent) || 0;
       setBudget((prev) => ({ ...prev, currentMonthSpent: safeTotalSpent }));
       setTransactions(refreshData.history || []);
-      setCustomName("");
-      setCustomAmount("");
-      setSelectedIcon(CATEGORIES[0].icon);
-      setEditId(null);
+      
+      // 重置
+      setCustomName(""); setCustomAmount(""); setEditId(null); 
+      setRecordType("EXPENSE"); // 重置回支出
       setIsAdding(false);
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) { console.error(e); }
   };
 
   const handleDelete = async (id: number) => {
@@ -1352,7 +1352,7 @@ export default function Dashboard() {
               {/* 關閉按鈕 */}
               <button
                 onClick={() => setIsAdding(false)}
-                className="absolute top-4 right-4 text-stone-300 hover:text-stone-600 hover:bg-stone-100 rounded-full p-1 transition-all"
+                className="absolute top-1 right-2 text-stone-300 hover:text-stone-600 hover:bg-stone-100 rounded-full p-1 transition-all"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -1374,7 +1374,7 @@ export default function Dashboard() {
                 <h3 className="text-lg font-serif font-bold text-stone-800">
                   {editId ? "✏️ 修改支出" : "✨ 新增支出"}
                 </h3>
-                <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-2xl border border-stone-200">
+                <div className="w-10 h-10 mr-3 rounded-full bg-stone-100 flex items-center justify-center text-2xl border border-stone-200">
                   {selectedIcon}
                 </div>
               </div>

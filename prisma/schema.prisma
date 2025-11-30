@@ -25,6 +25,7 @@ model Expense {
   userId    String   // ✨ 關鍵：記錄這筆帳是誰記的
   amount    Int
   name      String
+  type      String   @default("EXPENSE")
   createdAt DateTime @default(now())
 }
 

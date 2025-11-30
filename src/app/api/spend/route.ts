@@ -8,30 +8,32 @@ export async function GET() {
 
   try {
     const now = new Date();
+    // 預設抓這個月的資料
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // 1. 只算「這個人」的總花費
-    const aggregation = await prisma.expense.aggregate({
-      _sum: { amount: true },
+    // 1. 抓出所有紀錄
+    const records = await prisma.expense.findMany({
       where: { 
-        userId: userId, // ✨ 關鍵過濾條件
-        createdAt: { gte: firstDayOfMonth } 
-      },
-    });
-
-    // 2. 只抓「這個人」的明細
-    const history = await prisma.expense.findMany({
-      where: { 
-        userId: userId, // ✨ 關鍵過濾條件
+        userId: userId,
         createdAt: { gte: firstDayOfMonth } 
       },
       orderBy: { createdAt: 'desc' },
-      take: 20,
+    });
+
+    // 2. 計算淨支出 (支出 - 收入)
+    let totalSpent = 0;
+    records.forEach(item => {
+      // @ts-ignore (忽略暫時的型別檢查，因為資料庫剛更新)
+      if (item.type === 'INCOME') {
+        totalSpent -= item.amount; // 收入：讓花費變少 (錢包回血)
+      } else {
+        totalSpent += item.amount; // 支出：讓花費變多
+      }
     });
 
     return NextResponse.json({ 
-      totalSpent: aggregation._sum.amount || 0,
-      history: history 
+      totalSpent: totalSpent,
+      history: records 
     });
   } catch (error) {
     return NextResponse.json({ error: '讀取失敗' }, { status: 500 });
@@ -44,11 +46,14 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
+    
     const newExpense = await prisma.expense.create({
       data: {
-        userId: userId, // ✨ 寫入時標記是誰記的
-        amount: body.amount,
+        userId: userId,
+        amount: Number(body.amount),
         name: body.name,
+        type: body.type || 'EXPENSE', // 預設為支出
+        createdAt: body.date ? new Date(body.date) : new Date(), // 自訂日期
       },
     });
     return NextResponse.json(newExpense);
@@ -62,10 +67,14 @@ export async function PUT(request: Request) {
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
   try {
     const body = await request.json();
-    // 確保只能修改自己的資料 (where 加入 userId 雙重驗證)
     const updated = await prisma.expense.updateMany({
       where: { id: body.id, userId: userId },
-      data: { name: body.name, amount: Number(body.amount) },
+      data: { 
+        name: body.name, 
+        amount: Number(body.amount),
+        type: body.type,
+        createdAt: body.date ? new Date(body.date) : undefined
+      },
     });
     return NextResponse.json(updated);
   } catch (error) { return NextResponse.json({ error: '更新失敗' }, { status: 500 }); }
@@ -76,7 +85,6 @@ export async function DELETE(request: Request) {
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
   try {
     const body = await request.json();
-    // 確保只能刪除自己的資料
     await prisma.expense.deleteMany({
       where: { id: body.id, userId: userId },
     });
