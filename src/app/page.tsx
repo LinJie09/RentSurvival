@@ -98,6 +98,9 @@ export default function Dashboard() {
         setTransactions(spendData.history || []);
         setPortfolio(investData || []);
         setRiskItems(riskData || []);
+        setPortfolio(Array.isArray(investData) ? investData : []);
+        setRiskItems(Array.isArray(riskData) ? riskData : []);
+        
       } catch (error) {
         console.error("讀取失敗:", error);
       }
@@ -158,6 +161,7 @@ export default function Dashboard() {
     const refreshRes = await fetch("/api/investment");
     setPortfolio(await refreshRes.json());
   };
+  const safePortfolio = Array.isArray(portfolio) ? portfolio : [];
 
   // 股票資產計算
   const totalStockValue = portfolio.reduce(
@@ -214,6 +218,7 @@ export default function Dashboard() {
     const refreshRes = await fetch("/api/risk");
     setRiskItems(await refreshRes.json());
   };
+  const safeRiskItems = Array.isArray(riskItems) ? riskItems : [];
 
   // 風險資產計算
   const totalRiskListValue = riskItems.reduce(
