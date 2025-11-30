@@ -4,9 +4,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql" // 👈 改成 postgresql
+  url       = env("PRISMA_DATABASE_URL") // 👈 改用 Vercel 專用連線池
+  directUrl = env("POSTGRES_URL") // 👈 新增這行 (用於 Migration)
 }
+
+
 
 // 1. 設定檔 (存薪水、房租等設定)
 // 因為是單機版，我們預設只會用 ID=1 來存使用者的設定
