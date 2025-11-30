@@ -2,7 +2,6 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 // 1. 定義哪些路徑需要保護？ (這裡是設定：除了靜態檔案外，全部都要保護)
 const isProtectedRoute = createRouteMatcher([
-  '/',           // 首頁
   '/dashboard(.*)', // 儀表板相關
   '/api(.*)',    // 所有 API
 ]);
