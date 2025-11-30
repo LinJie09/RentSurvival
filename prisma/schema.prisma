@@ -1,47 +1,50 @@
-// 告訴 Prisma 我們使用 SQLite (輕量化資料庫檔案)
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql" // 👈 改成 postgresql
-  url       = env("POSTGRES_PRISMA_URL") // 👈 改用 Vercel 專用連線池
-  directUrl = env("POSTGRES_URL_NON_POOLING") // 👈 新增這行 (用於 Migration)
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
-
-
-// 1. 設定檔 (存薪水、房租等設定)
-// 因為是單機版，我們預設只會用 ID=1 來存使用者的設定
+// 1. 設定檔 (改用 userId 來辨識)
 model Settings {
-  id            Int     @id @default(1)
+  id            Int     @id @default(autoincrement())
+  userId        String  @unique // ✨ 關鍵：記錄這是誰的設定，且每人只能有一筆
   totalSalary   Int     @default(32000)
   rent          Int     @default(8500)
-  savingsTarget Int     @default(6200) // 儲蓄投資
-  riskTarget    Int     @default(3200) // ✨ 新增：風險規劃 (預設 10%)
-  fixedCost     Int     @default(3000) // 固定帳單 (屬於生活帳戶的支出)
+  savingsTarget Int     @default(6200)
+  riskTarget    Int     @default(3200)
+  fixedCost     Int     @default(3000)
 }
 
+// 2. 記帳紀錄
 model Expense {
   id        Int      @id @default(autoincrement())
+  userId    String   // ✨ 關鍵：記錄這筆帳是誰記的
   amount    Int
   name      String
   createdAt DateTime @default(now())
 }
-// ✨ 新增：投資組合 (存股票)
+
+// 3. 投資組合
 model Portfolio {
   id           Int      @id @default(autoincrement())
-  symbol       String   // 代號 (例如: 0050, 2330)
-  shares       Int      // 股數 (例如: 1000 股)
-  avgCost      Float    // 平均成本 (例如: 150.5 元)
-  currentPrice Float    // 目前市價 (手動更新或模擬)
+  userId       String   // ✨ 關鍵
+  symbol       String
+  shares       Int
+  avgCost      Float
+  currentPrice Float
   createdAt    DateTime @default(now())
 }
-// ✨ 新增：風險規劃項目 (保險、緊急預備金)
+
+// 4. 風險項目
 model RiskItem {
   id        Int      @id @default(autoincrement())
-  name      String   // 項目名稱 (例如: 富邦醫療險, 緊急預備金)
-  amount    Int      // 金額 (保費 or 存款金額)
-  type      String   // 類別 (例如: "insurance" 或 "cash")
+  userId    String   // ✨ 關鍵
+  name      String
+  amount    Int
+  type      String
   createdAt DateTime @default(now())
 }

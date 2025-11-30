@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { UserButton } from "@clerk/nextjs";
 
 // 定義分類選項
 const CATEGORIES = [
@@ -388,12 +389,12 @@ export default function Dashboard() {
         <div className="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-orange-100 rounded-full blur-3xl opacity-50 z-0"></div>
         <div className="absolute bottom-0 left-0 -ml-10 -mb-10 w-40 h-40 bg-stone-200 rounded-full blur-3xl opacity-50 z-0"></div>
 
-        {/* Header */}
+        {/* Header (已加入 UserButton) */}
         <header className="relative z-10 flex justify-between items-end pt-6 pb-2 border-b-2 border-dashed border-stone-200">
           <div>
             <h1 className="text-2xl font-serif font-bold text-stone-800 tracking-wide">
               {viewMode === "dashboard"
-                ? "RentSurvival"
+                ? "My 3 Accounts"
                 : viewMode === "investment"
                 ? "Investment Portfolio"
                 : "Risk Management"}
@@ -406,18 +407,25 @@ export default function Dashboard() {
                 : "保險與預備金"}
             </p>
           </div>
-          <button
-            onClick={() => {
-              if (viewMode !== "dashboard") setViewMode("dashboard");
-              else {
-                setTempBudget(budget);
-                setIsEditing(true);
-              }
-            }}
-            className="p-2 bg-white border border-stone-200 rounded-full shadow-sm hover:bg-stone-50 active:scale-95 transition-all text-stone-400"
-          >
-            {viewMode !== "dashboard" ? "↩️" : "⚙️"}
-          </button>
+
+          <div className="flex items-center gap-3">
+            {/* 1. 設定/返回按鈕 */}
+            <button
+              onClick={() => {
+                if (viewMode !== "dashboard") setViewMode("dashboard");
+                else {
+                  setTempBudget(budget);
+                  setIsEditing(true);
+                }
+              }}
+              className="p-2 bg-white border border-stone-200 rounded-full shadow-sm hover:bg-stone-50 active:scale-95 transition-all text-stone-400 w-10 h-10 flex items-center justify-center"
+            >
+              {viewMode !== "dashboard" ? "↩️" : "⚙️"}
+            </button>
+
+            {/* 2. ✨ Clerk 使用者頭像 (登出功能都在這) */}
+            <UserButton afterSignOutUrl="/" />
+          </div>
         </header>
 
         {isEditing ? (
