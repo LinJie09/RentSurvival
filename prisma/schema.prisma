@@ -5,8 +5,8 @@ generator client {
 
 datasource db {
   provider  = "postgresql" // 👈 改成 postgresql
-  url       = env("PRISMA_DATABASE_URL") // 👈 改用 Vercel 專用連線池
-  directUrl = env("POSTGRES_URL") // 👈 新增這行 (用於 Migration)
+  url       = env("POSTGRES_PRISMA_URL") // 👈 改用 Vercel 專用連線池
+  directUrl = env("POSTGRES_URL_NON_POOLING") // 👈 新增這行 (用於 Migration)
 }
 
 

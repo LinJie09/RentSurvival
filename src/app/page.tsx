@@ -84,11 +84,13 @@ export default function Dashboard() {
 
         setBudget((prev) => ({
           ...prev,
-          totalSalary: budgetData.totalSalary || 32000,
-          rent: budgetData.rent || 8500,
-          savingsTarget: budgetData.savingsTarget || 6200,
-          riskTarget: budgetData.riskTarget || 3200,
-          fixedCost: budgetData.fixedCost || 3000,
+          // ✨ 關鍵修改：把 || 全部改成 ??
+          totalSalary: budgetData.totalSalary ?? 32000,
+          rent: budgetData.rent ?? 8500,
+          savingsTarget: budgetData.savingsTarget ?? 6200,
+          riskTarget: budgetData.riskTarget ?? 3200,
+          fixedCost: budgetData.fixedCost ?? 3000,
+          // 下面這行維持 || 0 或是 ?? 0 都可以，因為 totalSpent 通常不會是預設值問題
           currentMonthSpent: Number(spendData.totalSpent) || 0,
         }));
 
