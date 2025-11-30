@@ -399,7 +399,7 @@ export default function Dashboard() {
           <div>
             <h1 className="text-2xl font-serif font-bold text-stone-800 tracking-wide">
               {viewMode === "dashboard"
-                ? "My 3 Accounts"
+                ? "Rent Survival"
                 : viewMode === "investment"
                 ? "Investment Portfolio"
                 : "Risk Management"}
