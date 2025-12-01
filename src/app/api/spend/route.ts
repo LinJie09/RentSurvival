@@ -2,39 +2,73 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
 
-export async function GET() {
+export async function GET(request: Request) {
   const { userId } = await auth();
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
   try {
-    const now = new Date();
-    // 預設抓這個月的資料
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const { searchParams } = new URL(request.url);
+    const queryMonth = searchParams.get('month');
 
-    // 1. 抓出所有紀錄
-    const records = await prisma.expense.findMany({
+    // 1. 設定日期範圍
+    let targetDate = new Date();
+    if (queryMonth) targetDate = new Date(`${queryMonth}-01`);
+
+    const year = targetDate.getFullYear();
+    const month = targetDate.getMonth();
+    const startOfMonth = new Date(year, month, 1);
+    const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59);
+
+    // 上個月範圍 (計算上月結餘用)
+    const lastMonthStart = new Date(year, month - 1, 1);
+    const lastMonthEnd = new Date(year, month, 0, 23, 59, 59);
+
+    // 2. 查詢「選定月份」的紀錄 (這就是我們要的列表！)
+    const currentRecords = await prisma.expense.findMany({
       where: { 
         userId: userId,
-        createdAt: { gte: firstDayOfMonth } 
+        createdAt: { gte: startOfMonth, lte: endOfMonth } // ✨ 嚴格限制日期範圍
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    // 2. 計算淨支出 (支出 - 收入)
-    let totalSpent = 0;
-    records.forEach(item => {
-      // @ts-ignore (忽略暫時的型別檢查，因為資料庫剛更新)
-      if (item.type === 'INCOME') {
-        totalSpent -= item.amount; // 收入：讓花費變少 (錢包回血)
-      } else {
-        totalSpent += item.amount; // 支出：讓花費變多
+    // 3. 查詢上個月紀錄
+    const lastMonthRecords = await prisma.expense.findMany({
+      where: {
+        userId: userId,
+        createdAt: { gte: lastMonthStart, lte: lastMonthEnd }
       }
     });
 
-    return NextResponse.json({ 
-      totalSpent: totalSpent,
-      history: records 
+    // 4. 計算本月收支
+    let totalIncome = 0;
+    let totalExpense = 0;
+    
+    currentRecords.forEach(item => {
+      if (item.type === 'INCOME') {
+        totalIncome += item.amount;
+      } else {
+        totalExpense += item.amount;
+      }
     });
+
+    // 5. 計算上個月結餘
+    let lastMonthIncome = 0;
+    let lastMonthExpense = 0;
+    lastMonthRecords.forEach(item => {
+      if (item.type === 'INCOME') lastMonthIncome += item.amount;
+      else lastMonthExpense += item.amount;
+    });
+
+    return NextResponse.json({ 
+      totalIncome,
+      totalExpense,
+      lastMonthIncome,
+      lastMonthExpense,
+      // ✨ 關鍵修改：這裡直接回傳 currentRecords (已被日期過濾)，而不是另外抓的 historyRecords
+      history: currentRecords 
+    });
+
   } catch (error) {
     return NextResponse.json({ error: '讀取失敗' }, { status: 500 });
   }
@@ -47,13 +81,14 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
+    // 使用 prisma.expense
     const newExpense = await prisma.expense.create({
       data: {
         userId: userId,
         amount: Number(body.amount),
         name: body.name,
-        type: body.type || 'EXPENSE', // 預設為支出
-        createdAt: body.date ? new Date(body.date) : new Date(), // 自訂日期
+        type: body.type || 'EXPENSE',
+        createdAt: body.date ? new Date(body.date) : new Date(),
       },
     });
     return NextResponse.json(newExpense);
@@ -67,6 +102,7 @@ export async function PUT(request: Request) {
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
   try {
     const body = await request.json();
+    // 使用 prisma.expense
     const updated = await prisma.expense.updateMany({
       where: { id: body.id, userId: userId },
       data: { 
@@ -85,6 +121,7 @@ export async function DELETE(request: Request) {
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
   try {
     const body = await request.json();
+    // 使用 prisma.expense
     await prisma.expense.deleteMany({
       where: { id: body.id, userId: userId },
     });

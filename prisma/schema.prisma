@@ -14,6 +14,7 @@ model Settings {
   userId        String  @unique // ✨ 關鍵：記錄這是誰的設定，且每人只能有一筆
   totalSalary   Int     @default(32000)
   rent          Int     @default(8500)
+  payDay        Int     @default(5)     // ✨ 新增：發薪日 (預設 5號)
   savingsTarget Int     @default(6200)
   riskTarget    Int     @default(3200)
   fixedCost     Int     @default(3000)
