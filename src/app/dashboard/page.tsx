@@ -68,7 +68,6 @@ export default function Dashboard() {
   const [riskType, setRiskType] = useState("insurance");
 
   // 財務設定
-  // 財務設定
   const [budget, setBudget] = useState({
     totalSalary: 32000,
     payDay: 5, // ✨ 新增
@@ -86,8 +85,7 @@ export default function Dashboard() {
     setMounted(true);
   }, []);
 
-  // 2. 讀取資料 (當 mounted 完成 或 切換月份 時執行)
-  // 初始化資料 (當 mounted 或 selectedMonth 改變時執行)
+  // 2. 讀取資料 (當 mounted 或 selectedMonth 改變時執行)
   useEffect(() => {
     if (!mounted) return;
 
@@ -212,8 +210,6 @@ export default function Dashboard() {
     setPortfolio(await refreshRes.json());
   };
 
-  const safePortfolio = Array.isArray(portfolio) ? portfolio : [];
-
   // 股票資產計算
   const totalStockValue = portfolio.reduce(
     (acc, stock) => acc + stock.shares * stock.avgCost,
@@ -270,7 +266,6 @@ export default function Dashboard() {
     const refreshRes = await fetch("/api/risk");
     setRiskItems(await refreshRes.json());
   };
-  const safeRiskItems = Array.isArray(riskItems) ? riskItems : [];
 
   // 風險資產計算
   const totalRiskListValue = riskItems.reduce(
@@ -309,7 +304,7 @@ export default function Dashboard() {
   const livingRemaining =
     monthlyStats.income - totalFixedCosts - monthlyStats.expense;
 
-  // (3) 計算距離發薪日天數 (維持原樣)
+  // (3) 計算距離發薪日天數
   const today = new Date();
   const nextPayDay = new Date();
   const userPayDay = budget.payDay || 5;
@@ -329,7 +324,7 @@ export default function Dashboard() {
 
   // --- 圓餅圖計算 (Pie Chart Logic) ---
 
-  /// 如果本月還沒收入，暫時用「預設月薪」當分母來畫圖，這樣圓餅圖才不會壞掉
+  // 如果本月還沒收入，暫時用「預設月薪」當分母來畫圖，這樣圓餅圖才不會壞掉
   const total =
     monthlyStats.income > 0 ? monthlyStats.income : budget.totalSalary || 1;
 
@@ -800,24 +795,6 @@ export default function Dashboard() {
                   儲存分配
                 </button>
               </div>
-
-              {/* 重置按鈕 */}
-              {/* <div className="mt-8 pt-6 border-t border-stone-100 text-center">
-              <button
-                onClick={async () => {
-                  if (!confirm("⚠️ 警告：確定要清空所有資料嗎？")) return;
-                  try {
-                    await fetch("/api/reset", { method: "POST" });
-                    window.location.reload();
-                  } catch (e) {
-                    alert("重置失敗");
-                  }
-                }}
-                className="text-red-400 text-xs font-bold hover:text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors"
-              >
-                🔴 重置所有資料 (Reset Data)
-              </button>
-            </div> */}
             </div>
           </section>
         ) : viewMode === "investment" ? (
@@ -1099,67 +1076,82 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* ✨ 新增：月份選擇條 (Dashboard 模式才顯示) */}
               {/* ✨ 新增：年份與月份獨立選擇器 (Dashboard 模式才顯示) */}
-            {viewMode === 'dashboard' && (
-              <div className="relative z-10 mt-4 mb-2">
-                <div className="bg-white/80 backdrop-blur-md p-3 rounded-2xl border border-stone-200 shadow-sm">
-                  
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-stone-100 p-1.5 rounded-lg text-lg">🗓️</span>
-                      <div>
-                        <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Time Travel</div>
-                        <div className="text-xs text-stone-500 font-medium">切換檢視日期</div>
+              {viewMode === "dashboard" && (
+                <div className="relative z-10 mt-4 mb-2">
+                  <div className="bg-white/80 backdrop-blur-md p-3 rounded-2xl border border-stone-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-stone-100 p-1.5 rounded-lg text-lg">
+                          🗓️
+                        </span>
+                        <div>
+                          <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+                            Time Travel
+                          </div>
+                          <div className="text-xs text-stone-500 font-medium">
+                            切換檢視日期
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 年月選擇區 (拆分為兩個 Select) */}
+                    <div className="flex gap-2">
+                      {/* 1. 年份選擇 (前後 5 年) */}
+                      <div className="relative flex-1">
+                        <select
+                          value={selectedMonth.split("-")[0]} // 抓取 "2025-12" 的 "2025"
+                          onChange={(e) => {
+                            const newYear = e.target.value;
+                            const currentMonth = selectedMonth.split("-")[1];
+                            setSelectedMonth(`${newYear}-${currentMonth}`);
+                          }}
+                          className="w-full appearance-none bg-stone-50 border border-stone-200 text-stone-700 text-sm font-bold rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-stone-200 cursor-pointer"
+                        >
+                          {Array.from({ length: 11 }, (_, i) => {
+                            const y = new Date().getFullYear() - 5 + i; // 範圍：前5年 ~ 後5年
+                            return (
+                              <option key={y} value={y}>
+                                {y} 年
+                              </option>
+                            );
+                          })}
+                        </select>
+                        {/* 自訂箭頭 */}
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400 text-xs">
+                          ▼
+                        </div>
+                      </div>
+
+                      {/* 2. 月份選擇 (1-12月) */}
+                      <div className="relative flex-1">
+                        <select
+                          value={selectedMonth.split("-")[1]} // 抓取 "2025-12" 的 "12"
+                          onChange={(e) => {
+                            const currentYear = selectedMonth.split("-")[0];
+                            const newMonth = e.target.value;
+                            setSelectedMonth(`${currentYear}-${newMonth}`);
+                          }}
+                          className="w-full appearance-none bg-stone-50 border border-stone-200 text-stone-700 text-sm font-bold rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-stone-200 cursor-pointer"
+                        >
+                          {Array.from({ length: 12 }, (_, i) => {
+                            const m = String(i + 1).padStart(2, "0");
+                            return (
+                              <option key={m} value={m}>
+                                {i + 1} 月
+                              </option>
+                            );
+                          })}
+                        </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400 text-xs">
+                          ▼
+                        </div>
                       </div>
                     </div>
                   </div>
-
-                  {/* 年月選擇區 (拆分為兩個 Select) */}
-                  <div className="flex gap-2">
-                    {/* 1. 年份選擇 (前後 5 年) */}
-                    <div className="relative flex-1">
-                      <select
-                        value={selectedMonth.split('-')[0]} // 抓取 "2025-12" 的 "2025"
-                        onChange={(e) => {
-                          const newYear = e.target.value;
-                          const currentMonth = selectedMonth.split('-')[1];
-                          setSelectedMonth(`${newYear}-${currentMonth}`);
-                        }}
-                        className="w-full appearance-none bg-stone-50 border border-stone-200 text-stone-700 text-sm font-bold rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-stone-200 cursor-pointer"
-                      >
-                        {Array.from({ length: 11 }, (_, i) => {
-                          const y = new Date().getFullYear() - 5 + i; // 範圍：前5年 ~ 後5年
-                          return <option key={y} value={y}>{y} 年</option>;
-                        })}
-                      </select>
-                      {/* 自訂箭頭 */}
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400 text-xs">▼</div>
-                    </div>
-
-                    {/* 2. 月份選擇 (1-12月) */}
-                    <div className="relative flex-1">
-                      <select
-                        value={selectedMonth.split('-')[1]} // 抓取 "2025-12" 的 "12"
-                        onChange={(e) => {
-                          const currentYear = selectedMonth.split('-')[0];
-                          const newMonth = e.target.value;
-                          setSelectedMonth(`${currentYear}-${newMonth}`);
-                        }}
-                        className="w-full appearance-none bg-stone-50 border border-stone-200 text-stone-700 text-sm font-bold rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-stone-200 cursor-pointer"
-                      >
-                        {Array.from({ length: 12 }, (_, i) => {
-                          const m = String(i + 1).padStart(2, '0');
-                          return <option key={m} value={m}>{i + 1} 月</option>;
-                        })}
-                      </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400 text-xs">▼</div>
-                    </div>
-                  </div>
-
                 </div>
-              </div>
-            )}
+              )}
 
               {/* === ✨ 滑動卡片區 (Slider Section) === */}
               <div className="relative">

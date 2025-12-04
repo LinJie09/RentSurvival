@@ -28,3 +28,11 @@ export default function RootLayout({
     </ClerkProvider>
   );
 }
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  // 這一行最重要：讓內容延伸到瀏海區域，避免白邊
+  viewportFit: 'cover',
+};
